@@ -1,12 +1,17 @@
-# Sử dụng image chứa sẵn trình mô phỏng KVM và Windows của Dockur
-FROM qemux/qemu
+FROM ubuntu
 
-# Cấu hình phiên bản Windows muốn cài (ở đây là Windows 10)
-ENV VERSION="ubuntu"
+ENV DEBIAN_FRONTEND=noninteractive
+ENV USER=root
 
-# Cấu hình cấu hình phần cứng ảo (Mặc định Railway gói thấp RAM sẽ rất yếu)
-ENV RAM_SIZE="2G"
-ENV CPU_CORES="2"
+# Cài đặt môi trường đồ họa XFCE, VNC Server và noVNC
+RUN apt update && \
+    apt install -y xfce4 tigervnc-standalone-server websockify novnc dbus-x11 python3 yaru-theme-gtk yaru-theme-icon && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Mở port 8006 để truy cập giao diện Windows qua trình duyệt Web
-EXPOSE 8006
+RUN ln -s /usr/share/novnc/vnc.html /usr/share/novnc/index.html
+
+# BẮT BUỘC: Khai báo cổng để hệ thống Deployments nhận diện mạng
+EXPOSE 6080
+
+# Chạy chuỗi lệnh dọn dẹp, kích hoạt VNC và Websockify trên cổng 6080 toàn cục (0.0.0.0)
+CMD ["/bin/bash", "-c", "rm -rf /tmp/.X11-unix/X1 /tmp/.X*-lock && vncserver -SecurityTypes None -xstartup /usr/bin/startxfce4 :1 && sleep 3 && websockify --web=/usr/share/novnc/ 6080 0.0.0.0:5901"]
