@@ -5,7 +5,7 @@ ENV USER=root
 
 # Cài đặt môi trường đồ họa XFCE, VNC Server và noVNC
 RUN apt update && \
-    apt install -y xfce4 tigervnc-standalone-server websockify novnc dbus-x11 python3 yaru-theme-gtk yaru-theme-icon && \
+    apt install -y xfce4 xfce4-goodies tigervnc-standalone-server websockify novnc dbus-x11 python3 yaru-theme-gtk yaru-theme-icon && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 RUN ln -s /usr/share/novnc/vnc.html /usr/share/novnc/index.html
