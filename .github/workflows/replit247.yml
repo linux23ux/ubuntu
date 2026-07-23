@@ -1,0 +1,17 @@
+name: Keep Replit Awake 24/7
+
+on:
+  schedule:
+    - cron: '*/10 * * * *' # Cứ mỗi 10 phút tự động chạy một lần vĩnh viễn
+  workflow_dispatch: # Cho phép bạn bấm nút chạy bằng tay khi cần
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send User Agent Traffic to Replit
+        run: |
+          # Dùng curl gửi headers giả lập trình duyệt Chrome của người thật
+          curl -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" \
+               -H "Accept-Language: vi-VN,vi;q=0.9" \
+               https://fba5992e-d6a9-4bb8-b1e4-a0d8865189f3-00-1oppfn5x3k01l.pike.replit.dev/?autoconnect=true
