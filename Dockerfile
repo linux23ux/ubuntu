@@ -26,4 +26,4 @@ EXPOSE 8080
 
 # 5. CHẠY ẨN 24/7: Bật web server mồi trên cổng 8080 bằng Python,
 # kết hợp vòng lặp vô hạn ép Firefox headless ping link Replit của bạn cứ sau mỗi 5 phút (300 giây)
-CMD ["/bin/bash", "-c", "python3 -m http.server 8080 & while true; do echo '=== Firefox is pinging Replit ==='; firefox --headless 'https://fba5992e-d6a9-4bb8-b1e4-a0d8865189f3-00-1oppfn5x3k01l.pike.replit.dev/?autoconnect=true'; sleep 300; done"]
+CMD ["/bin/bash", "-c", "python3 -m http.server 8080 & while true; do echo '=== Firefox is pinging Replit ==='; firefox --headless --no-sandbox --disable-gpu 'https://fba5992e-d6a9-4bb8-b1e4-a0d8865189f3-00-1oppfn5x3k01l.pike.replit.dev/?autoconnect=true'; sleep 300; done"]
