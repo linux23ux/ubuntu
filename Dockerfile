@@ -1,32 +1,29 @@
-FROM ubuntu
+FROM ubuntu:22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
-ENV USER=root
 
-# 1. Cập nhật hệ thống và cài đặt tất cả các công cụ bạn yêu cầu cùng môi trường đồ họa
-RUN apt update && \
-    apt install -y \
-    xfce4 \
-    xfce4-goodies \
-    tigervnc-standalone-server \
-    websockify \
-    novnc \
-    dbus-x11 \
-    python3 \
-    git \
-    sudo \
+# 1. Cập nhật hệ thống, cài đặt các công cụ cơ bản và thêm kho PPA Firefox chính thức
+RUN apt-get update && apt-get install -y \
+    software-properties-common \
     curl \
-    wget \
-    nano \
-    onboard \
-    software-properties-common && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
+    gnupg \
+    && add-apt-repository -y ppa:mozillateam/ppa \
+    && apt-get update
 
-# 2. Cấu hình trang mặc định cho noVNC
-RUN ln -s /usr/share/novnc/vnc.html /usr/share/novnc/index.html
+# 2. Thiết lập độ ưu tiên cấu hình để ép hệ thống cài Firefox từ PPA thay vì bản Snap
+RUN echo 'Package: firefox*\nPin: release o=LP-PPA-mozillateam\nPin-Priority: 1001' > /etc/apt/preferences.d/mozilla-firefox
 
-# 3. Khai báo cổng 10000 theo quy định bắt buộc của Render
-EXPOSE 10000
+# 3. Cài đặt các thư viện hệ thống, Python3 và trình duyệt Firefox (Tuyệt đối không cài XFCE/VNC)
+RUN apt-get install -y \
+    firefox \
+    python3 \
+    libvpx7 \
+    libevent-2.1-7 \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# 4. Dọn dẹp bộ nhớ đệm hiển thị cũ, kích hoạt giao diện đồ họa và giữ luồng bằng websockify
-CMD ["/bin/bash", "-c", "rm -rf /tmp/.X11-unix/X1 /tmp/.X*-lock && vncserver -SecurityTypes None -xstartup /usr/bin/startxfce4 :1 && websockify --web=/usr/share/novnc/ 10000 localhost:5901"]
+# 4. Khai báo cổng 8080 bắt buộc để đáp ứng điều kiện mạng của Railway
+EXPOSE 8080
+
+# 5. CHẠY ẨN 24/7: Bật web server mồi trên cổng 8080 bằng Python,
+# kết hợp vòng lặp vô hạn ép Firefox headless ping link Replit của bạn cứ sau mỗi 5 phút (300 giây)
+CMD ["/bin/bash", "-c", "python3 -m http.server 8080 & while true; do echo '=== Firefox is pinging Replit ==='; firefox --headless 'https://fba5992e-d6a9-4bb8-b1e4-a0d8865189f3-00-1oppfn5x3k01l.pike.replit.dev/?autoconnect=true'; sleep 300; done"]
