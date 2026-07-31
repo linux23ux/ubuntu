@@ -1,22 +1,6 @@
-FROM accetto/ubuntu-vnc-novnc:latest
+FROM accetto/ubuntu-vnc-xfce-g3:latest
 
-# 2. Switch to root user to install custom packages
 USER root
 
-# Example: Install any additional tools you need (like git or curl)
-RUN apt-get update && apt-get install -y \
-    curl \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
-# 3. Switch back to the standard non-root user for execution security
-USER 1001
-
-# 4. Optional: Override default environment variables
-ENV VNC_PW=mysecretpassword
-ENV VNC_RESOLUTION=1920x1080
-
-# Keep the base image's configuration intact
-WORKDIR /dockerstartup
-ENTRYPOINT ["./vnc_startup.sh"]
-CMD ["--wait"]
+# Ghi đè cổng mặc định 6901 bằng biến $PORT của Render khi khởi chạy
+ENTRYPOINT ["/bin/bash", "-c", "sed -i \"s/6901/${PORT}/g\" /usr/share/usr/local/share/noVNCdim/index.html || true; exec /dockerstartup/vnc_startup.sh --wait"]
