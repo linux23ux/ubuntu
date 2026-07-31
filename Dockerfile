@@ -1,6 +1,50 @@
-FROM accetto/ubuntu-vnc-xfce-g3:latest
+FROM accetto/xubuntu-vnc-novnc:${BASETAG} as stage-firefox
 
-USER root
+### Switch to root user before install
+USER 0
 
-# Ghi đè cổng mặc định 6901 bằng biến $PORT của Render khi khởi chạy
-ENTRYPOINT ["/bin/bash", "-c", "sed -i \"s/6901/${PORT}/g\" /usr/share/usr/local/share/noVNCdim/index.html || true; exec /dockerstartup/vnc_startup.sh --wait"]
+### 'apt-get clean' runs automatically
+RUN apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+        firefox \
+    && apt-get -y autoremove \
+    && rm -rf /var/lib/apt/lists/*
+
+### Mitigating issue #2 (Firefox 77.0.1 scrambles pages) - rollback to version 76.0.1
+### Alternatively install an explicit Firefox version
+### http://releases.mozilla.org/pub/firefox/releases/67.0.4/linux-x86_64/en-US/firefox-67.0.4.tar.bz2
+# RUN \
+#     FIREFOX_VERSION=76.0.1 \
+#     FIREFOX_DISTRO=linux-x86_64 \
+#     FIREFOX_PATH=/usr/lib/firefox \
+#     && mkdir -p ${FIREFOX_PATH} \
+#     && wget -qO- http://releases.mozilla.org/pub/firefox/releases/${FIREFOX_VERSION}/${FIREFOX_DISTRO}/en-US/firefox-${FIREFOX_VERSION}.tar.bz2 \
+#         | tar xvj -C /usr/lib/ \
+#     && ln -s ${FIREFOX_PATH}/firefox /usr/bin/firefox
+
+### Preconfigure Xfce
+COPY [ "./src/firefox/home/Desktop", "${HOME}/Desktop/" ]
+COPY [ "./src/firefox/home/config/xfce4", "${HOME}/.config/xfce4/" ]
+COPY [ "./src/startup/version_sticker.sh", "${STARTUPDIR}/" ]
+
+### Fix permissions
+RUN \
+    chmod a+wx "${STARTUPDIR}"/version_sticker.sh \
+    && "${STARTUPDIR}"/set_user_permissions.sh "${STARTUPDIR}" "${HOME}"
+
+FROM stage-firefox as stage-final
+
+ARG ARG_REFRESHED_AT
+ARG ARG_VERSION_STICKER
+ARG ARG_VCS_REF
+
+LABEL \
+    org.label-schema.vcs-ref="${ARG_VCS_REF}" \
+    version-sticker="${ARG_VERSION_STICKER}"
+
+ENV \
+    REFRESHED_AT=${ARG_REFRESHED_AT} \
+    VERSION_STICKER=${ARG_VERSION_STICKER}
+
+### Switch to default application user (non-root)
+USER 1001
