@@ -1,13 +1,18 @@
-FROM kingma/ubuntu-xfce-vnc:beta
+FROM accetto/ubuntu-vnc-xfce-g3:latest
 
-MAINTAINER Marvell "kingwinma@gmail.com"
-ENV REFRESHED_AT 2020-04-24
+USER root
 
-ADD ./src/ /home/vncuser/
-RUN chmod +x /home/vncuser/startup.sh && chown vncuser /home/vncuser/startup.sh
+# Cài đặt thêm các công cụ nếu cần
+RUN apt-get update && apt-get install -y \
+    curl \
+    git \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-EXPOSE 6080
-USER vncuser
+USER 1001
 
-ENTRYPOINT ["/home/vncuser/startup.sh"]
-CMD ["--wait"]
+# Đặt mật khẩu truy cập (Thay đổi theo ý bạn)
+ENV VNC_PW=render_password
+
+# MẸO CHO RENDER: Ép noVNC chạy trên cổng do Render cấp phát
+CMD ["/bin/bash", "-c", "/dockerstartup/vnc_startup.sh --vnc-port 5901 --novnc-port $PORT"]
