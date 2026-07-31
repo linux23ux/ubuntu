@@ -1,15 +1,13 @@
-FROM ubuntu:24.04
+FROM ubuntu
 
-ARG TARGETARCH
+RUN apt-get update && \
+    apt-get upgrade -y && \
+    apt-get -y install wget
 
-# Dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends tini && rm -rf /var/lib/apt/lists/*
+RUN wget -qO /bin/ttyd https://github.com/tsl0922/ttyd/releases/download/1.7.3/ttyd.x86_64 && \
+    chmod +x /bin/ttyd
 
-# Application
-COPY ./dist/${TARGETARCH}/ttyd /usr/bin/ttyd
+EXPOSE $PORT
+RUN echo $CREDENTIAL > /tmp/debug
 
-EXPOSE 7681
-WORKDIR /root
-
-ENTRYPOINT ["/usr/bin/tini", "--"]
-CMD ["ttyd", "-W", "bash"]
+CMD ["/bin/bash", "-c", "/bin/ttyd -p $PORT -c ubuntu:ubuntu /bin/bash"]
