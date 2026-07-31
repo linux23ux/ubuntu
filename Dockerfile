@@ -1,13 +1,13 @@
-FROM ubuntu
+FROM kingma/ubuntu-xfce-vnc:beta
 
-RUN apt-get update && \
-    apt-get upgrade -y && \
-    apt-get -y install wget
+MAINTAINER Marvell "kingwinma@gmail.com"
+ENV REFRESHED_AT 2020-04-24
 
-RUN wget -qO /bin/ttyd https://github.com/tsl0922/ttyd/releases/download/1.7.3/ttyd.x86_64 && \
-    chmod +x /bin/ttyd
+ADD ./src/ /home/vncuser/
+RUN chmod +x /home/vncuser/startup.sh && chown vncuser /home/vncuser/startup.sh
 
-EXPOSE $PORT
-RUN echo $CREDENTIAL > /tmp/debug
+EXPOSE 6080
+USER vncuser
 
-CMD ["/bin/bash", "-c", "/bin/ttyd -p $PORT -c ubuntu:ubuntu /bin/bash"]
+ENTRYPOINT ["/home/vncuser/startup.sh"]
+CMD ["--wait"]
