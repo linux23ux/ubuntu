@@ -1,9 +1,7 @@
 FROM accetto/ubuntu-vnc-xfce-g3:latest
 
-# Mở cổng 80 (Cổng mặc định bên trong Image này để chạy noVNC web)
-EXPOSE 80
+# Mở cổng 6901 (Cổng chạy giao diện web noVNC mặc định của image này)
+EXPOSE 6901
 
-# Thiết lập biến môi trường (Tùy chọn: chỉnh độ phân giải màn hình)
-
-# Khởi chạy hệ thống
-CMD ["/startup.sh"]
+# Đặt mật khẩu truy cập bắt buộc để bảo mật
+ENV VNC_PW=36356
