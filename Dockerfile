@@ -1,4 +1,4 @@
-FROM dorowu/ubuntu-desktop-lxde-vnc:latest
+FROM accetto/ubuntu-vnc-xfce-g3:latest
 
 # Mở cổng 80 (Cổng mặc định bên trong Image này để chạy noVNC web)
 EXPOSE 80
