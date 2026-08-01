@@ -2,7 +2,7 @@
 FROM --platform=linux/amd64 accetto/ubuntu-vnc-xfce-g3:24.04
 
 # Định nghĩa lại cổng kết nối noVNC (Render mặc định dùng cổng 10000)
-ENV VNC_PORT=10000
+ENV VNC_PORT=5901
 ENV NO_VNC_PORT=10000
 
 # Đặt mật khẩu đăng nhập VNC (Thay đổi theo ý bạn)
