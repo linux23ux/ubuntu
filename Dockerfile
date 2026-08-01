@@ -1,16 +1,18 @@
-# Sử dụng bản build sẵn Ubuntu + giao diện Xfce đầy đủ chính thức
-FROM dorowu/ubuntu-desktop-lxde-vnc:focal-xfce
+# Sử dụng trực tiếp bản build sẵn từ Docker Hub của tác giả accetto
+FROM accetto/ubuntu-vnc-xfce:latest
 
-# Chuyển sang quyền root để cấu hình cổng mạng cho Render
+# Render yêu cầu quyền root để cấu hình định tuyến cổng mạng dịch vụ
 USER root
 
-# Cấu hình biến môi trường để hệ thống tự nhận diện cổng cấp bởi Render
-# Render sử dụng biến $PORT (thường là 10000)
+# Đồng bộ cổng hiển thị Web (NO_VNC_PORT) với cổng cấp động từ Render ($PORT)
+# Mặc định Render dùng cổng 10000 nếu không thiết lập khác
 ENV PORT=10000
-EXPOSE 10000
+ENV NO_VNC_PORT=${PORT}
+EXPOSE ${PORT}
 
-# Ghi đè cấu hình cổng mặc định (80) của image sang cổng của Render
-RUN sed -i 's/listen 80 default_server;/listen [::]:10000 default_server;\n    listen 10000 default_server;/g' /etc/nginx/sites-enabled/default
+# Đặt thư mục làm việc mặc định về kịch bản khởi động của hệ thống
+WORKDIR ${STARTUPDIR}
 
-# Tắt tính năng yêu cầu mật khẩu để dễ dàng truy cập ngay từ trình duyệt
-ENV HTTP_PASSWORD=""
+# Giữ nguyên lệnh khởi chạy mặc định của tác giả
+ENTRYPOINT ["./vnc_startup.sh"]
+CMD [ "--wait" ]
