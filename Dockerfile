@@ -1,50 +1,38 @@
-FROM accetto/xubuntu-vnc-novnc:${BASETAG} as stage-firefox
+# Sử dụng phiên bản Ubuntu chính thức làm nền tảng
+FROM --platform=linux/amd64 ubuntu:22.04
 
-### Switch to root user before install
-USER 0
+# Thiết lập môi trường không tương tác (tránh bị dừng khi cài đặt gói)
+ENV DEBIAN_FRONTEND=noninteractive
 
-### 'apt-get clean' runs automatically
-RUN apt-get update \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y \
-        firefox \
-    && apt-get -y autoremove \
-    && rm -rf /var/lib/apt/lists/*
+# Cập nhật hệ thống và cài đặt môi trường máy tính để bàn Xfce (Xubuntu) cùng các công cụ bổ trợ
+RUN apt-get update && apt-get install -y \
+    xfce4 \
+    xfce4-goodies \
+    xvfb \
+    x11vnc \
+    git \
+    python3 \
+    python3-pip \
+    curl \
+    && apt-get clean \
+    && rm -rf /var/lib/lists/*
 
-### Mitigating issue #2 (Firefox 77.0.1 scrambles pages) - rollback to version 76.0.1
-### Alternatively install an explicit Firefox version
-### http://releases.mozilla.org/pub/firefox/releases/67.0.4/linux-x86_64/en-US/firefox-67.0.4.tar.bz2
-# RUN \
-#     FIREFOX_VERSION=76.0.1 \
-#     FIREFOX_DISTRO=linux-x86_64 \
-#     FIREFOX_PATH=/usr/lib/firefox \
-#     && mkdir -p ${FIREFOX_PATH} \
-#     && wget -qO- http://releases.mozilla.org/pub/firefox/releases/${FIREFOX_VERSION}/${FIREFOX_DISTRO}/en-US/firefox-${FIREFOX_VERSION}.tar.bz2 \
-#         | tar xvj -C /usr/lib/ \
-#     && ln -s ${FIREFOX_PATH}/firefox /usr/bin/firefox
+# Cài đặt noVNC để có thể xem giao diện trực tiếp trên trình duyệt web
+RUN git clone https://github.com/novnc/noVNC /opt/noVNC && \
+    git clone https://github.com/noVNC/websockify /opt/noVNC/utils/websockify && \
+    ln -s /opt/noVNC/vnc.html /opt/noVNC/index.html
 
-### Preconfigure Xfce
-COPY [ "./src/firefox/home/Desktop", "${HOME}/Desktop/" ]
-COPY [ "./src/firefox/home/config/xfce4", "${HOME}/.config/xfce4/" ]
-COPY [ "./src/startup/version_sticker.sh", "${STARTUPDIR}/" ]
+# Cấu hình môi trường và độ phân giải màn hình ảo
+ENV DISPLAY=:1
+ENV RESOLUTION=1280x720x24
 
-### Fix permissions
-RUN \
-    chmod a+wx "${STARTUPDIR}"/version_sticker.sh \
-    && "${STARTUPDIR}"/set_user_permissions.sh "${STARTUPDIR}" "${HOME}"
+# Render cấp cổng dịch vụ động qua biến môi trường PORT (mặc định chọn 10000 nếu không có)
+ENV PORT=10000
+EXPOSE 10000
 
-FROM stage-firefox as stage-final
-
-ARG ARG_REFRESHED_AT
-ARG ARG_VERSION_STICKER
-ARG ARG_VCS_REF
-
-LABEL \
-    org.label-schema.vcs-ref="${ARG_VCS_REF}" \
-    version-sticker="${ARG_VERSION_STICKER}"
-
-ENV \
-    REFRESHED_AT=${ARG_REFRESHED_AT} \
-    VERSION_STICKER=${ARG_VERSION_STICKER}
-
-### Switch to default application user (non-root)
-USER 1001
+# Khởi chạy Xvfb, Xfce4, x11vnc và định tuyến qua noVNC
+CMD Xvfb :1 -screen 0 $RESOLUTION & \
+    sleep 2 && \
+    xfce4-session & \
+    x11vnc -display :1 -nopw -listen localhost -forever -shared & \
+    /opt/noVNC/utils/websockify/run.sh --web /opt/noVNC $PORT
